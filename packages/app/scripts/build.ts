@@ -3,9 +3,14 @@ import { join } from "node:path";
 import { readdir, stat } from "node:fs/promises";
 
 // Helper function to recursively list directory structure
-async function listDirectoryStructure(dirPath: string, prefix = "", maxDepth = 3, currentDepth = 0): Promise<void> {
+async function listDirectoryStructure(
+  dirPath: string,
+  prefix = "",
+  maxDepth = 3,
+  currentDepth = 0,
+): Promise<void> {
   if (currentDepth >= maxDepth) return;
-  
+
   try {
     const items = await readdir(dirPath);
     for (let i = 0; i < items.length; i++) {
@@ -14,13 +19,22 @@ async function listDirectoryStructure(dirPath: string, prefix = "", maxDepth = 3
       const isLast = i === items.length - 1;
       const currentPrefix = prefix + (isLast ? "└── " : "├── ");
       const nextPrefix = prefix + (isLast ? "    " : "│   ");
-      
+
       try {
         const stats = await stat(itemPath);
         console.log(currentPrefix + item + (stats.isDirectory() ? "/" : ""));
-        
-        if (stats.isDirectory() && !item.startsWith('.') && item !== 'node_modules') {
-          await listDirectoryStructure(itemPath, nextPrefix, maxDepth, currentDepth + 1);
+
+        if (
+          stats.isDirectory() &&
+          !item.startsWith(".") &&
+          item !== "node_modules"
+        ) {
+          await listDirectoryStructure(
+            itemPath,
+            nextPrefix,
+            maxDepth,
+            currentDepth + 1,
+          );
         }
       } catch (error) {
         console.log(currentPrefix + item + " (error reading)");
@@ -32,7 +46,10 @@ async function listDirectoryStructure(dirPath: string, prefix = "", maxDepth = 3
 }
 
 // Helper function to check if a directory exists
-async function checkDirectory(path: string, description: string): Promise<void> {
+async function checkDirectory(
+  path: string,
+  description: string,
+): Promise<void> {
   try {
     const stats = await stat(path);
     if (stats.isDirectory()) {
@@ -79,18 +96,47 @@ await checkDirectory("/vercel", "/vercel directory");
 console.log("\n📂 Current directory structure:");
 await listDirectoryStructure(".", "", 3);
 
-const outputDir = join(".vercel", "output", "static");
+// Detect if we're running in Vercel's production environment
+const isVercelProduction =
+  process.env.VERCEL === "1" || process.env.CI === "true";
+const isLocalBuild = !isVercelProduction;
+
+console.log("\n🌍 ENVIRONMENT DETECTION");
+console.log("========================");
+console.log(
+  "📍 Environment:",
+  isVercelProduction ? "Vercel Production" : "Local Development",
+);
+console.log("📍 VERCEL env var:", process.env.VERCEL || "not set");
+console.log("📍 CI env var:", process.env.CI || "not set");
+
+// Choose output directory based on environment
+let outputDir: string;
+let vercelDir: string;
+
+if (isVercelProduction) {
+  // In Vercel production, use project root's .vercel directory
+  outputDir = join("../../.vercel", "output", "static");
+  vercelDir = "../../.vercel";
+  console.log("🏭 Using PRODUCTION output path");
+} else {
+  // Locally, use package's own .vercel directory (matches `vercel build` behavior)
+  outputDir = join(".vercel", "output", "static");
+  vercelDir = ".vercel";
+  console.log("🏠 Using LOCAL output path");
+}
+
 console.log("\n🎯 Target output directory:", outputDir);
 console.log("🎯 Absolute output path:", join(process.cwd(), outputDir));
 
-// Check if .vercel directory exists before creating
+// Check if .vercel directory exists
 try {
-  const vercelStats = await stat(".vercel");
-  console.log("\n✅ .vercel directory already exists");
-  console.log("📂 Contents of .vercel:");
-  await listDirectoryStructure(".vercel", "", 2);
+  const vercelStats = await stat(vercelDir);
+  console.log(`\n✅ .vercel directory already exists at: ${vercelDir}`);
+  console.log("📂 Contents:");
+  await listDirectoryStructure(vercelDir, "", 2);
 } catch (error) {
-  console.log("\n❌ .vercel directory does not exist yet");
+  console.log(`\n❌ .vercel directory does not exist yet at: ${vercelDir}`);
 }
 
 // Ensure the output directory exists
@@ -99,7 +145,7 @@ await mkdir(outputDir, { recursive: true });
 
 // Show .vercel structure after creation
 console.log("\n📂 .vercel directory structure after creation:");
-await listDirectoryStructure(".vercel", "", 3);
+await listDirectoryStructure(vercelDir, "", 3);
 
 console.log("\n🚀 Starting build...");
 const output = await Bun.build({
@@ -118,7 +164,7 @@ console.log("📊 Build output:", output);
 
 // Show final directory structure
 console.log("\n📂 Final .vercel directory structure:");
-await listDirectoryStructure(".vercel", "", 3);
+await listDirectoryStructure(vercelDir, "", 3);
 
 // Check if Vercel created anything at the project root level after our build
 console.log("\n🔍 POST-BUILD: Checking if Vercel created output folders:");
