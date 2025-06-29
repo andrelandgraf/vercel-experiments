@@ -1,16 +1,13 @@
 {
-  "name": "vercel-experiments",
-  "module": "index.ts",
+  "name": "vercel-experiments-monorepo",
   "type": "module",
-  "dependencies": {
+  "scripts": {
+    "fmt": "prettier --write ."
   },
+  "workspaces": [
+    "packages/*"
+  ],
   "devDependencies": {
-    "@types/node": "22.x"
-  },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
-  },
-  "engines": {
-    "node": "22.x"
+    "prettier": "^3.6.2"
   }
 }

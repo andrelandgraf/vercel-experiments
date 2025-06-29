@@ -7,5 +7,9 @@ bun install
 # Run
 
 ```bash
-bun run dev
+cd apps/app && bun run dev
+```
+
+```bash
+cd apps/marketing && bun run dev
 ```
