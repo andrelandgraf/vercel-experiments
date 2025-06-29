@@ -5,7 +5,7 @@ const outputDir = ".vercel/output/static";
 // Ensure the output directory exists
 await mkdir(outputDir, { recursive: true });
 
-await Bun.build({
+const output = await Bun.build({
   entrypoints: ["./src/index.html"],
   outdir: outputDir,
   sourcemap: "linked",
@@ -15,5 +15,7 @@ await Bun.build({
     "process.env.NODE_ENV": '"production"',
   },
 });
+
+console.log(output);
 
 export {};
