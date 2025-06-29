@@ -3,8 +3,7 @@ import { mkdir } from "node:fs/promises";
 
 const outputDir = ".vercel/output/static";
 
-// Ensure .vercel/output directory exists
-await mkdir(".vercel/output", { recursive: true });
+await mkdir(outputDir, { recursive: true });
 
 // Create config.json for Vercel Build Output Configuration
 const configPath = ".vercel/output/config.json";
