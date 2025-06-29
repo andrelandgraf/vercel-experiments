@@ -1,0 +1,16 @@
+{
+  "name": "vercel-experiments",
+  "module": "index.ts",
+  "type": "module",
+  "dependencies": {
+  },
+  "devDependencies": {
+    "@types/node": "22.x"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": "22.x"
+  }
+}
