@@ -2,7 +2,10 @@
   "name": "vercel-experiments-monorepo",
   "type": "module",
   "scripts": {
-    "fmt": "prettier --write ."
+    "fmt": "prettier --write .",
+    "vercel:setup": "vercel link --repo",
+    "dev:app": "vercel dev --listen 3000",
+    "dev:marketing": "vercel dev --listen 3001"
   },
   "workspaces": [
     "packages/*"
