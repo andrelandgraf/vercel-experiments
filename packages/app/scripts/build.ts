@@ -1,12 +1,13 @@
 import { mkdir } from "node:fs/promises";
+import { join } from "node:path";
 
-const outputDir = ".vercel/output/static";
+const outputDir = join(".vercel", "output", "static");
 
 // Ensure the output directory exists
 await mkdir(outputDir, { recursive: true });
 
 const output = await Bun.build({
-  entrypoints: ["./src/index.html"],
+  entrypoints: [join(".", "src", "index.html")],
   outdir: outputDir,
   sourcemap: "linked",
   target: "browser",
