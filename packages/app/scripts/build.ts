@@ -29,6 +29,11 @@ const output = await Bun.build({
   },
 });
 
-console.log(output.logs);
+if(!output.success) {
+  console.error(output.logs);
+  throw new Error("Build failed");
+} else {
+  console.log(output.logs);
+}
 
 export {};
