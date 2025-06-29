@@ -1,3 +1,4 @@
+import { $ } from "bun";
 import { mkdir } from "node:fs/promises";
 
 const outputDir = ".vercel/output/static";
@@ -13,6 +14,10 @@ const config = {
 
 await Bun.write(configPath, JSON.stringify(config, null, 2));
 console.log(`Created config.json at ${configPath}`);
+
+// Copy static files from public/ to output directory
+await $`cp -r public/* ${outputDir}/`;
+console.log(`Copied static files from public/ to ${outputDir}`);
 
 const output = await Bun.build({
   entrypoints: ["./src/index.html"],
