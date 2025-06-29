@@ -31,12 +31,49 @@ async function listDirectoryStructure(dirPath: string, prefix = "", maxDepth = 3
   }
 }
 
+// Helper function to check if a directory exists
+async function checkDirectory(path: string, description: string): Promise<void> {
+  try {
+    const stats = await stat(path);
+    if (stats.isDirectory()) {
+      console.log(`✅ ${description} exists at: ${path}`);
+      console.log(`📂 Contents:`);
+      await listDirectoryStructure(path, "", 2);
+    } else {
+      console.log(`❌ ${description} exists but is not a directory: ${path}`);
+    }
+  } catch (error) {
+    console.log(`❌ ${description} does not exist: ${path}`);
+  }
+}
+
 console.log("🔍 BUILD ENVIRONMENT DEBUG INFO");
 console.log("================================");
 
 // Show current working directory
 console.log("📁 Current working directory:", process.cwd());
 console.log("📁 __dirname equivalent:", import.meta.dir);
+
+// Check parent directories for existing .vercel or output folders
+console.log("\n🔍 CHECKING PARENT DIRECTORIES");
+console.log("==============================");
+
+// Check if there's a .vercel folder at the project root (/vercel/path0)
+const projectRoot = "/vercel/path0";
+console.log(`\n🔍 Checking project root: ${projectRoot}`);
+await checkDirectory(projectRoot, "Project root");
+
+console.log(`\n🔍 Checking for .vercel at project root:`);
+await checkDirectory(join(projectRoot, ".vercel"), ".vercel at project root");
+
+console.log(`\n🔍 Checking for output at project root:`);
+await checkDirectory(join(projectRoot, "output"), "output at project root");
+
+console.log(`\n🔍 Checking for /vercel/output (absolute):`);
+await checkDirectory("/vercel/output", "/vercel/output");
+
+console.log(`\n🔍 Checking /vercel directory:`);
+await checkDirectory("/vercel", "/vercel directory");
 
 // Show current directory structure
 console.log("\n📂 Current directory structure:");
@@ -82,5 +119,15 @@ console.log("📊 Build output:", output);
 // Show final directory structure
 console.log("\n📂 Final .vercel directory structure:");
 await listDirectoryStructure(".vercel", "", 3);
+
+// Check if Vercel created anything at the project root level after our build
+console.log("\n🔍 POST-BUILD: Checking if Vercel created output folders:");
+console.log("========================================================");
+
+console.log(`\n🔍 Re-checking project root after build:`);
+await checkDirectory(projectRoot, "Project root after build");
+
+console.log(`\n🔍 Re-checking /vercel/output after build:`);
+await checkDirectory("/vercel/output", "/vercel/output after build");
 
 export {};
