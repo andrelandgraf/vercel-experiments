@@ -6,7 +6,7 @@
   "main": "src/index.tsx",
   "module": "src/index.tsx",
   "scripts": {
-    "dev": "bun ./src/index.html --console",
+    "dev": "bun run ./scripts/dev.ts",
     "build": "bun run ./scripts/build.tsx",
     "start": "NODE_ENV=production bun src/index.tsx"
   },
