@@ -148,3 +148,15 @@ Run with: `bun scripts/build.ts`
 - **Bun** - Used for building and bundling
 - **Node.js** - For file system operations
 - **src/index.html** - Required entry point file
+
+## Runtime Router
+
+The runtime includes a minimal React router for client-side navigation.
+
+### Supported features
+
+- Static routes (e.g. `/about`)
+- Vercel-style dynamic routes using `[param]` segments
+- Query string parsing via `useRouterState`
+- `<Link>` component and `useNavigate` for navigation
+
