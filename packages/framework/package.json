@@ -1,7 +1,19 @@
 {
   "name": "framework",
+  "type": "module",
+  "exports": {
+    "./build": "./build.ts",
+    "./runtime": "./runtime/index.ts"
+  },
+  "scripts": {
+    "test": "bun test"
+  },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@happy-dom/global-registrator": "latest",
+    "@testing-library/react": "latest",
+    "@testing-library/dom": "latest",
+    "@testing-library/jest-dom": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"
