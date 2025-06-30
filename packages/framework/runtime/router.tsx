@@ -37,6 +37,11 @@ function matchRoute(pathname: string, routes: Route[]) {
           names.push(segment.slice(1));
           return "([^/]+)";
         }
+        const bracket = segment.match(/^\[(.+)\]$/);
+        if (bracket) {
+          names.push(bracket[1]);
+          return "([^/]+)";
+        }
         return segment.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
       })
       .join("/");
