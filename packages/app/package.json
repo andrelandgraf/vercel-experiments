@@ -13,12 +13,12 @@
   "dependencies": {
     "react": "^19",
     "react-dom": "^19",
-    "vercel-experiments-ui": "workspace:*"
+    "vercel-experiments-ui": "workspace:*",
+    "framework": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "framework": "workspace:*"
+    "@types/react-dom": "^19"
   }
 }
