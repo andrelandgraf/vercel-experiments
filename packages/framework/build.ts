@@ -2,6 +2,8 @@ import { $ } from "bun";
 import { mkdir, access, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { compile } from "tailwindcss";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -11,7 +13,8 @@ export async function build() {
   const rootDir = process.cwd();
   const publicDir = "public";
   const srcDir = "src";
-  const entryPoint = "index.html";
+  const entryPoint = "root.tsx";
+  const clientEntry = "frontend.tsx";
   const outputDir = ".vercel/output";
   const staticOutputDir = path.join(outputDir, "static");
 
@@ -19,6 +22,7 @@ export async function build() {
   const publicPath = path.resolve(rootDir, publicDir);
   const srcPath = path.resolve(rootDir, srcDir);
   const entryPointPath = path.resolve(rootDir, srcDir, entryPoint);
+  const clientEntryPath = path.resolve(rootDir, srcDir, clientEntry);
 
   try {
     await access(srcPath);
@@ -32,7 +36,15 @@ export async function build() {
     await access(entryPointPath);
   } catch {
     throw new Error(
-      `❌ Entry point not found: ${entryPointPath}\nMake sure you have an 'index.html' file in your src folder.`,
+      `❌ Entry point not found: ${entryPointPath}\nMake sure you have a 'root.tsx' file in your src folder.`,
+    );
+  }
+
+  try {
+    await access(clientEntryPath);
+  } catch {
+    throw new Error(
+      `❌ Client entry not found: ${clientEntryPath}\nMake sure you have a 'frontend.tsx' file in your src folder.`,
     );
   }
 
@@ -55,6 +67,10 @@ export async function build() {
   const configPath = path.join(outputDir, "config.json");
   const config = {
     version: 3,
+    routes: [
+      { handle: "filesystem" },
+      { src: "/(.*)", dest: "ssr" },
+    ],
   };
 
   await Bun.write(configPath, JSON.stringify(config, null, 2));
@@ -73,10 +89,10 @@ export async function build() {
   }
 
   // Build the application
-  console.log(`🔨 Building ${entryPointPath}...`);
+  console.log(`🔨 Building ${clientEntryPath}...`);
 
   const output = await Bun.build({
-    entrypoints: [entryPointPath],
+    entrypoints: [clientEntryPath],
     outdir: staticOutputDir,
     sourcemap: "linked",
     target: "browser",
@@ -94,6 +110,12 @@ export async function build() {
   } else {
     console.log("✅ Build successful!");
     console.log(`📦 Output generated in: ${staticOutputDir}`);
+    const { default: Root } = await import(entryPointPath);
+    const htmlContent = "<!doctype html>" +
+      renderToStaticMarkup(React.createElement(Root));
+    const htmlPath = path.join(staticOutputDir, "index.html");
+    await Bun.write(htmlPath, htmlContent);
+    console.log(`✅ Wrote HTML to ${htmlPath}`);
   }
 
   // Compile Tailwind CSS from the shared UI styles
@@ -123,7 +145,7 @@ export async function build() {
     await Bun.write(cssOutputPath, result.build([]));
     console.log(`✅ Compiled Tailwind CSS to ${cssOutputPath}`);
 
-    const htmlPath = path.join(staticOutputDir, entryPoint);
+    const htmlPath = path.join(staticOutputDir, "index.html");
     let html = await Bun.file(htmlPath).text();
     if (!html.includes("tailwind.css")) {
       html = html.replace(
@@ -135,6 +157,36 @@ export async function build() {
     }
   } catch (error) {
     console.warn(`⚠️  Failed to compile Tailwind CSS: ${error}`);
+  }
+
+  // Build server entry if present
+  const serverEntry = path.resolve(rootDir, "entry.server.ts");
+  try {
+    await access(serverEntry);
+    const funcDir = path.join(outputDir, "functions", "ssr.func");
+    await mkdir(funcDir, { recursive: true });
+    const serverOutput = await Bun.build({
+      entrypoints: [serverEntry],
+      outdir: funcDir,
+      target: "node",
+      minify: true,
+    });
+    if (!serverOutput.success) {
+      throw new Error("SSR server build failed");
+    }
+    const handler = path.basename(serverOutput.outputs[0].path);
+    const serverConfig = {
+      runtime: "nodejs20.x",
+      handler,
+      launcherType: "Nodejs",
+    };
+    await Bun.write(
+      path.join(funcDir, ".vc-config.json"),
+      JSON.stringify(serverConfig, null, 2),
+    );
+    console.log(`✅ Built SSR function to ${funcDir}`);
+  } catch {
+    console.log("ℹ️  No entry.server.ts found, skipping SSR build");
   }
 
   return output;
