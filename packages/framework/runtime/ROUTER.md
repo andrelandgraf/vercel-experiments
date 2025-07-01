@@ -19,9 +19,9 @@ Routes are declared as an array of objects with a `path` and React `component`:
 
 ```tsx
 const routes = [
-  { path: '/', component: Home },
-  { path: '/about', component: About },
-  { path: '/users/[id]', component: User },
+  { path: "/", component: Home },
+  { path: "/about", component: About },
+  { path: "/users/[id]", component: User },
 ];
 ```
 
@@ -31,7 +31,7 @@ Paths can be static or contain dynamic segments using either `[param]` or
 ## Usage Example
 
 ```tsx
-import { Router, Link, useRouterState } from 'framework/runtime';
+import { Router, Link, useRouterState } from "framework/runtime";
 
 function Home() {
   return (
@@ -54,8 +54,8 @@ function About() {
 }
 
 const routes = [
-  { path: '/', component: Home },
-  { path: '/about', component: About },
+  { path: "/", component: Home },
+  { path: "/about", component: About },
 ];
 
 export default function App() {
@@ -71,11 +71,11 @@ When no route matches the current path, nothing is rendered.
 When rendering on the server you can provide a `url` prop to `Router`. This value is used instead of `window.location` so the correct route is rendered for the incoming request.
 
 ```tsx
-import { Router } from 'framework/runtime';
+import { Router } from "framework/runtime";
 
 const routes = [
-  { path: '/', component: Home },
-  { path: '/about', component: About },
+  { path: "/", component: Home },
+  { path: "/about", component: About },
 ];
 
 export default function render(req: Request) {

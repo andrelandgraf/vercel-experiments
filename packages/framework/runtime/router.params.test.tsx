@@ -10,7 +10,9 @@ beforeEach(() => {
 function Home() {
   return (
     <div>
-      Home <Link to="/todos/123?foo=bar">Todo</Link> <Link to="/users/42">User</Link> <Link to="/todos/%E2%9C%93?foo=bar">Encoded</Link>
+      Home <Link to="/todos/123?foo=bar">Todo</Link>{" "}
+      <Link to="/users/42">User</Link>{" "}
+      <Link to="/todos/%E2%9C%93?foo=bar">Encoded</Link>
     </div>
   );
 }

@@ -51,9 +51,9 @@ test(
 
     const outBase = path.join(dir, ".vercel/output");
     expect(await fileExists(path.join(outBase, "config.json"))).toBe(true);
-    expect(
-      await fileExists(path.join(outBase, "static/index.html"))
-    ).toBe(true);
+    expect(await fileExists(path.join(outBase, "static/index.html"))).toBe(
+      true,
+    );
     expect(await fileExists(path.join(outBase, "static/tailwind.css"))).toBe(
       true,
     );

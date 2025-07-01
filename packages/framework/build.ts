@@ -67,10 +67,7 @@ export async function build() {
   const configPath = path.join(outputDir, "config.json");
   const config = {
     version: 3,
-    routes: [
-      { handle: "filesystem" },
-      { src: "/(.*)", dest: "ssr" },
-    ],
+    routes: [{ handle: "filesystem" }, { src: "/(.*)", dest: "ssr" }],
   };
 
   await Bun.write(configPath, JSON.stringify(config, null, 2));
@@ -111,8 +108,8 @@ export async function build() {
     console.log("✅ Build successful!");
     console.log(`📦 Output generated in: ${staticOutputDir}`);
     const { default: Root } = await import(entryPointPath);
-    const htmlContent = "<!doctype html>" +
-      renderToStaticMarkup(React.createElement(Root));
+    const htmlContent =
+      "<!doctype html>" + renderToStaticMarkup(React.createElement(Root));
     const htmlPath = path.join(staticOutputDir, "index.html");
     await Bun.write(htmlPath, htmlContent);
     console.log(`✅ Wrote HTML to ${htmlPath}`);
@@ -160,7 +157,7 @@ export async function build() {
   }
 
   // Build server entry if present
-  const serverEntry = path.resolve(rootDir, "entry.server.ts");
+  const serverEntry = path.resolve(rootDir, "entry.server.tsx");
   try {
     await access(serverEntry);
     const funcDir = path.join(outputDir, "functions", "ssr.func");
@@ -174,9 +171,12 @@ export async function build() {
     if (!serverOutput.success) {
       throw new Error("SSR server build failed");
     }
-    const handler = path.basename(serverOutput.outputs[0].path);
+    if (!serverOutput.outputs.length) {
+      throw new Error("SSR server build failed - no outputs");
+    }
+    const handler = path.basename(serverOutput.outputs[0]!.path);
     const serverConfig = {
-      runtime: "nodejs20.x",
+      runtime: "nodejs22.x",
       handler,
       launcherType: "Nodejs",
     };

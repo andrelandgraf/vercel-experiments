@@ -21,7 +21,10 @@ function Home() {
 function About() {
   return (
     <div>
-      About <Link to="/replace" replace>Replace</Link>
+      About{" "}
+      <Link to="/replace" replace>
+        Replace
+      </Link>
     </div>
   );
 }

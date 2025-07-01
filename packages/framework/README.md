@@ -34,6 +34,14 @@ your-project/
   - `static/` - Contains the built application and static assets
   - `config.json` - Vercel build configuration
 
+### File Conventions
+
+- **JSX Files** - All files containing JSX must use the `.tsx` extension
+  - ✅ `components/Button.tsx` - Correct
+  - ❌ `components/Button.ts` - Incorrect (contains JSX)
+  - React components and any files with JSX syntax require the `.tsx` extension
+  - Pure TypeScript files without JSX should use `.ts`
+
 ## Usage
 
 ### Installation
@@ -103,10 +111,7 @@ the filesystem (for example `/api` routes) to this function:
 ```json
 {
   "version": 3,
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "ssr" }
-  ]
+  "routes": [{ "handle": "filesystem" }, { "src": "/(.*)", "dest": "ssr" }]
 }
 ```
 

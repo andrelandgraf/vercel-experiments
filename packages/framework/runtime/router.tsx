@@ -83,7 +83,10 @@ export function Router({ routes, url, children }: RouterProps) {
     (u?: string | URL) => {
       if (u instanceof URL) return u;
       if (typeof u === "string") {
-        return new URL(u, isBrowser ? window.location.origin : "http://localhost");
+        return new URL(
+          u,
+          isBrowser ? window.location.origin : "http://localhost",
+        );
       }
       if (isBrowser) return new URL(window.location.href);
       return new URL("http://localhost/");
@@ -91,7 +94,9 @@ export function Router({ routes, url, children }: RouterProps) {
     [isBrowser],
   );
 
-  const [state, setState] = useState(() => createState(resolveUrl(url), routes));
+  const [state, setState] = useState(() =>
+    createState(resolveUrl(url), routes),
+  );
 
   const navigate = useCallback(
     (to: string, options?: { replace?: boolean }) => {
