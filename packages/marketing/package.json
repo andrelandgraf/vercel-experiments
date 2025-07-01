@@ -6,14 +6,15 @@
   "main": "src/index.tsx",
   "module": "src/index.tsx",
   "scripts": {
-    "dev": "PORT=$PORT bun run ./scripts/dev.ts",
-    "build": "bun run ./scripts/build.tsx",
+    "dev": "PORT=$PORT bun ./src/index.html --console",
+    "build": "bun run ./scripts/build.ts",
     "start": "NODE_ENV=production bun src/index.tsx"
   },
   "dependencies": {
     "react": "^19",
     "react-dom": "^19",
-    "vercel-experiments-ui": "workspace:*"
+    "vercel-experiments-ui": "workspace:*",
+    "framework": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "latest",
