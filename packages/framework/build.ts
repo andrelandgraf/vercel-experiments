@@ -2,7 +2,7 @@ import { $ } from "bun";
 import { mkdir, access, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { compile } from "tailwindcss/dist/lib.mjs";
+import { compile } from "tailwindcss";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uiStylesPath = path.resolve(__dirname, "../ui/styles/globals.css");
