@@ -6,9 +6,8 @@
   "main": "src/index.tsx",
   "module": "src/index.tsx",
   "scripts": {
-    "dev": "PORT=$PORT bun --hot ./src/root.tsx",
-    "build": "bun run ./scripts/build.ts",
-    "start": "NODE_ENV=production bun src/index.tsx"
+    "dev": "bun --hot ./dev.ts",
+    "build": "bun run ./scripts/build.ts"
   },
   "dependencies": {
     "react": "^19",

@@ -42,6 +42,12 @@ your-project/
   - React components and any files with JSX syntax require the `.tsx` extension
   - Pure TypeScript files without JSX should use `.ts`
 
+- **React Imports** - React does not need to be imported in `.tsx` files
+  - ✅ No import needed: JSX transforms are handled automatically
+  - ❌ `import React from 'react'` - Not required with our build system
+  - The TypeScript and build configuration automatically handles JSX transformation
+  - Only import specific React features you need (e.g., `useState`, `useEffect`)
+
 ## Usage
 
 ### Installation

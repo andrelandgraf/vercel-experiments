@@ -1,4 +1,3 @@
-import React from "react";
 import { Router, Link, useRouterState } from "framework/runtime";
 import type { Route } from "framework/runtime";
 

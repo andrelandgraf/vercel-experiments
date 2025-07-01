@@ -1,9 +1,7 @@
 import { $ } from "bun";
-import { mkdir, access, readFile } from "node:fs/promises";
+import { mkdir, access, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import React from "react";
-import { renderToStaticMarkup } from "react-dom/server";
 import { compile } from "tailwindcss";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -13,16 +11,16 @@ export async function build() {
   const rootDir = process.cwd();
   const publicDir = "public";
   const srcDir = "src";
-  const entryPoint = "root.tsx";
-  const clientEntry = "frontend.tsx";
+  const clientEntry = "entry.client.tsx";
+  const serverEntry = "entry.server.tsx";
   const outputDir = ".vercel/output";
   const staticOutputDir = path.join(outputDir, "static");
 
   // Check if required directories exist
   const publicPath = path.resolve(rootDir, publicDir);
   const srcPath = path.resolve(rootDir, srcDir);
-  const entryPointPath = path.resolve(rootDir, srcDir, entryPoint);
   const clientEntryPath = path.resolve(rootDir, srcDir, clientEntry);
+  const serverEntryPath = path.resolve(rootDir, srcDir, serverEntry);
 
   try {
     await access(srcPath);
@@ -33,18 +31,18 @@ export async function build() {
   }
 
   try {
-    await access(entryPointPath);
+    await access(clientEntryPath);
   } catch {
     throw new Error(
-      `❌ Entry point not found: ${entryPointPath}\nMake sure you have a 'root.tsx' file in your src folder.`,
+      `❌ Client entry not found: ${clientEntryPath}\nMake sure you have a 'entry.client.tsx' file in your src folder.`,
     );
   }
 
   try {
-    await access(clientEntryPath);
+    await access(serverEntryPath);
   } catch {
     throw new Error(
-      `❌ Client entry not found: ${clientEntryPath}\nMake sure you have a 'frontend.tsx' file in your src folder.`,
+      `❌ Server entry not found: ${serverEntryPath}\nMake sure you have a 'entry.server.tsx' file in your project root.`,
     );
   }
 
@@ -63,16 +61,6 @@ export async function build() {
   await mkdir(staticOutputDir, { recursive: true });
   console.log(`✅ Created output directory: ${staticOutputDir}`);
 
-  // Create config.json for Vercel Build Output Configuration
-  const configPath = path.join(outputDir, "config.json");
-  const config = {
-    version: 3,
-    routes: [{ handle: "filesystem" }, { src: "/(.*)", dest: "ssr" }],
-  };
-
-  await Bun.write(configPath, JSON.stringify(config, null, 2));
-  console.log(`✅ Created config.json at ${configPath}`);
-
   // Copy static files from public/ to output directory (if public dir exists)
   if (hasPublicDir) {
     try {
@@ -85,35 +73,43 @@ export async function build() {
     }
   }
 
-  // Build the application
+  // Build the client application first to get the hashed filenames
   console.log(`🔨 Building ${clientEntryPath}...`);
 
-  const output = await Bun.build({
+  const clientOutput = await Bun.build({
     entrypoints: [clientEntryPath],
     outdir: staticOutputDir,
     sourcemap: "linked",
     target: "browser",
     minify: true,
+    naming: "[dir]/[name]-[hash].[ext]", // Enable hashing for cache busting
     define: {
       "process.env.NODE_ENV": '"production"',
     },
   });
 
-  if (!output.success) {
-    console.error("❌ Build failed:", output);
-    throw new Error(
-      "Build process failed. Check the errors above for details.",
-    );
-  } else {
-    console.log("✅ Build successful!");
-    console.log(`📦 Output generated in: ${staticOutputDir}`);
-    const { default: Root } = await import(entryPointPath);
-    const htmlContent =
-      "<!doctype html>" + renderToStaticMarkup(React.createElement(Root));
-    const htmlPath = path.join(staticOutputDir, "index.html");
-    await Bun.write(htmlPath, htmlContent);
-    console.log(`✅ Wrote HTML to ${htmlPath}`);
+  if (!clientOutput.success) {
+    throw new Error("Client build failed");
   }
+
+  // Create a manifest mapping entry points to their built filenames
+  const manifest: Record<string, string> = {};
+
+  for (const output of clientOutput.outputs) {
+    const filename = path.basename(output.path);
+    const relativePath = path.relative(staticOutputDir, output.path);
+
+    // Map the original entry name to the built filename
+    if (filename.startsWith("entry.client")) {
+      manifest["entry.client.tsx"] = `./${relativePath}`;
+    }
+  }
+
+  // Write the manifest file to both static directory (for client access) and functions directory (for server access)
+  const manifestContent = JSON.stringify(manifest, null, 2);
+  const staticManifestPath = path.join(staticOutputDir, "manifest.json");
+  await writeFile(staticManifestPath, manifestContent);
+  console.log(`✅ Created client manifest at ${staticManifestPath}`);
 
   // Compile Tailwind CSS from the shared UI styles
   try {
@@ -141,53 +137,52 @@ export async function build() {
     const cssOutputPath = path.join(staticOutputDir, "tailwind.css");
     await Bun.write(cssOutputPath, result.build([]));
     console.log(`✅ Compiled Tailwind CSS to ${cssOutputPath}`);
-
-    const htmlPath = path.join(staticOutputDir, "index.html");
-    let html = await Bun.file(htmlPath).text();
-    if (!html.includes("tailwind.css")) {
-      html = html.replace(
-        /<\/head>/i,
-        `  <link rel="stylesheet" href="./tailwind.css" />\n</head>`,
-      );
-      await Bun.write(htmlPath, html);
-      console.log(`✅ Injected Tailwind into ${htmlPath}`);
-    }
   } catch (error) {
     console.warn(`⚠️  Failed to compile Tailwind CSS: ${error}`);
   }
 
-  // Build server entry if present
-  const serverEntry = path.resolve(rootDir, "entry.server.tsx");
-  try {
-    await access(serverEntry);
-    const funcDir = path.join(outputDir, "functions", "ssr.func");
-    await mkdir(funcDir, { recursive: true });
-    const serverOutput = await Bun.build({
-      entrypoints: [serverEntry],
-      outdir: funcDir,
-      target: "node",
-      minify: true,
-    });
-    if (!serverOutput.success) {
-      throw new Error("SSR server build failed");
-    }
-    if (!serverOutput.outputs.length) {
-      throw new Error("SSR server build failed - no outputs");
-    }
-    const handler = path.basename(serverOutput.outputs[0]!.path);
-    const serverConfig = {
-      runtime: "nodejs22.x",
-      handler,
-      launcherType: "Nodejs",
-    };
-    await Bun.write(
-      path.join(funcDir, ".vc-config.json"),
-      JSON.stringify(serverConfig, null, 2),
-    );
-    console.log(`✅ Built SSR function to ${funcDir}`);
-  } catch {
-    console.log("ℹ️  No entry.server.ts found, skipping SSR build");
-  }
+  // Build server entry (required)
+  const funcDir = path.join(outputDir, "functions", "index.func");
+  await mkdir(funcDir, { recursive: true });
 
-  return output;
+  // Copy the manifest to the functions directory so the server can read it
+  const serverManifestPath = path.join(funcDir, "manifest.json");
+  await writeFile(serverManifestPath, manifestContent);
+  console.log(`✅ Created server manifest at ${serverManifestPath}`);
+
+  const serverOutput = await Bun.build({
+    entrypoints: [serverEntryPath],
+    outdir: funcDir,
+    target: "node",
+    minify: true,
+  });
+  if (!serverOutput.success) {
+    throw new Error("SSR server build failed");
+  }
+  if (!serverOutput.outputs.length) {
+    throw new Error("SSR server build failed - no outputs");
+  }
+  const handler = path.basename(serverOutput.outputs[0]!.path);
+  const serverConfig = {
+    runtime: "nodejs22.x",
+    handler,
+    launcherType: "Nodejs",
+  };
+  await Bun.write(
+    path.join(funcDir, ".vc-config.json"),
+    JSON.stringify(serverConfig, null, 2),
+  );
+  console.log(`✅ Built SSR function to ${funcDir}`);
+
+  // Create config.json for Vercel Build Output Configuration
+  const configPath = path.join(outputDir, "config.json");
+  const config = {
+    version: 3,
+    routes: [{ handle: "filesystem" }, { src: "/(.*)", dest: "/" }],
+  };
+
+  await Bun.write(configPath, JSON.stringify(config, null, 2));
+  console.log(`✅ Created config.json at ${configPath}`);
+
+  return clientOutput;
 }
