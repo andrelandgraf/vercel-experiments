@@ -192,10 +192,10 @@ Run with: `bun scripts/build.ts`
 
 ## Tailwind CSS
 
-Tailwind v4 is bundled automatically. The framework compiles the stylesheet at
-`packages/ui/styles/globals.css` and outputs `tailwind.css` alongside your
-built application. No Tailwind configuration file is necessary. The generated
-HTML document is patched to include this stylesheet.
+Tailwind v4 is bundled automatically when your project provides a
+`tailwind.css` file. Use the `@config` directive in this stylesheet to extend
+the shared UI config. If no `tailwind.css` exists the build skips Tailwind
+entirely.
 
 ## Runtime Router
 

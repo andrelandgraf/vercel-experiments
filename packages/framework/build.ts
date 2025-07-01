@@ -5,7 +5,6 @@ import { fileURLToPath } from "node:url";
 import { compile } from "tailwindcss";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const uiStylesPath = path.resolve(__dirname, "../ui/styles/globals.css");
 
 export async function build() {
   const rootDir = process.cwd();
@@ -115,34 +114,43 @@ export async function build() {
   await writeFile(staticManifestPath, manifestContent);
   console.log(`✅ Created client manifest at ${staticManifestPath}`);
 
-  // Compile Tailwind CSS from the shared UI styles
-  try {
-    const css = await readFile(uiStylesPath, "utf8");
-    const result = await compile(css, {
-      from: uiStylesPath,
-      loadStylesheet: async (id: string, base: string) => {
-        let resolved: string;
-        if (id === "tailwindcss") {
-          resolved = import.meta.resolve("tailwindcss/index.css");
-        } else if (id === "tw-animate-css") {
-          resolved = import.meta.resolve("tw-animate-css");
-        } else {
-          resolved = new URL(id, `file://${base}/`).href;
-        }
-        const filePath = fileURLToPath(resolved);
-        return {
-          path: filePath,
-          base: path.dirname(filePath),
-          content: await readFile(filePath, "utf8"),
-        };
-      },
-    });
+  // Compile Tailwind CSS only if a project-specific stylesheet exists
+  const projectTailwindPath = path.resolve(rootDir, "tailwind.css");
+  const hasTailwind = await access(projectTailwindPath)
+    .then(() => true)
+    .catch(() => false);
 
-    const cssOutputPath = path.join(staticOutputDir, "tailwind.css");
-    await Bun.write(cssOutputPath, result.build([]));
-    console.log(`✅ Compiled Tailwind CSS to ${cssOutputPath}`);
-  } catch (error) {
-    console.warn(`⚠️  Failed to compile Tailwind CSS: ${error}`);
+  if (hasTailwind) {
+    try {
+      const css = await readFile(projectTailwindPath, "utf8");
+      const result = await compile(css, {
+        from: projectTailwindPath,
+        loadStylesheet: async (id: string, base: string) => {
+          let resolved: string;
+          if (id === "tailwindcss") {
+            resolved = import.meta.resolve("tailwindcss/index.css");
+          } else if (id === "tw-animate-css") {
+            resolved = import.meta.resolve("tw-animate-css");
+          } else {
+            resolved = new URL(id, `file://${base}/`).href;
+          }
+          const filePath = fileURLToPath(resolved);
+          return {
+            path: filePath,
+            base: path.dirname(filePath),
+            content: await readFile(filePath, "utf8"),
+          };
+        },
+      });
+
+      const cssOutputPath = path.join(staticOutputDir, "tailwind.css");
+      await Bun.write(cssOutputPath, result.build([]));
+      console.log(`✅ Compiled Tailwind CSS to ${cssOutputPath}`);
+    } catch (error) {
+      console.warn(`⚠️  Failed to compile Tailwind CSS: ${error}`);
+    }
+  } else {
+    console.log("ℹ️  No tailwind.css found - skipping Tailwind compilation");
   }
 
   // Build server entry (required)

@@ -1,7 +1,16 @@
 import { test, expect } from "bun:test";
-import { mkdtemp, mkdir, writeFile, rm, access } from "node:fs/promises";
+import {
+  mkdtemp,
+  mkdir,
+  writeFile,
+  rm,
+  access,
+  readFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+
+const uiConfig = path.resolve(__dirname, "../ui/styles/globals.css");
 
 async function loadBuild() {
   return (await import("./build")) as typeof import("./build");
@@ -41,7 +50,16 @@ test(
   withTempDir(async (dir) => {
     await mkdir(path.join(dir, "src"));
     await writeFile(path.join(dir, "src/index.html"), htmlContent);
-    await writeFile(path.join(dir, "src/index.ts"), tsContent);
+    await writeFile(path.join(dir, "src/entry.client.tsx"), tsContent);
+    await writeFile(path.join(dir, "src/entry.server.tsx"), tsContent);
+    await writeFile(
+      path.join(dir, "tailwind.css"),
+      `@tailwind base;\n@tailwind components;\n@tailwind utilities;\n`,
+    );
+    await writeFile(
+      path.join(dir, "tailwind.css"),
+      `@tailwind base;\n@tailwind components;\n@tailwind utilities;\n`,
+    );
     await mkdir(path.join(dir, "public"));
     await writeFile(path.join(dir, "public/test.txt"), "static");
 
@@ -50,11 +68,16 @@ test(
     expect(result.success).toBe(true);
 
     const outBase = path.join(dir, ".vercel/output");
+    const manifestPath = path.join(outBase, "static/manifest.json");
     expect(await fileExists(path.join(outBase, "config.json"))).toBe(true);
-    expect(await fileExists(path.join(outBase, "static/index.html"))).toBe(
+    expect(await fileExists(manifestPath)).toBe(true);
+    expect(await fileExists(path.join(outBase, "static/tailwind.css"))).toBe(
       true,
     );
-    expect(await fileExists(path.join(outBase, "static/tailwind.css"))).toBe(
+    const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+    const clientFile = manifest["entry.client.tsx"]?.replace(/^\.\/?/, "");
+    expect(clientFile).toBeDefined();
+    expect(await fileExists(path.join(outBase, "static", clientFile))).toBe(
       true,
     );
     expect(await fileExists(path.join(outBase, "static/test.txt"))).toBe(true);
@@ -66,7 +89,8 @@ test(
   withTempDir(async (dir) => {
     await mkdir(path.join(dir, "src"));
     await writeFile(path.join(dir, "src/index.html"), htmlContent);
-    await writeFile(path.join(dir, "src/index.ts"), tsContent);
+    await writeFile(path.join(dir, "src/entry.client.tsx"), tsContent);
+    await writeFile(path.join(dir, "src/entry.server.tsx"), tsContent);
 
     const warnings: string[] = [];
     const origWarn = console.warn;
@@ -97,6 +121,6 @@ test(
   withTempDir(async (dir) => {
     await mkdir(path.join(dir, "src"));
     const { build } = await loadBuild();
-    await expect(build()).rejects.toThrow("Entry point not found");
+    await expect(build()).rejects.toThrow("Client entry not found");
   }),
 );
