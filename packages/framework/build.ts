@@ -154,6 +154,7 @@ export async function build() {
     entrypoints: [serverEntryPath],
     outdir: funcDir,
     target: "node",
+    format: "cjs",
     minify: true,
   });
   if (!serverOutput.success) {
