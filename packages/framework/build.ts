@@ -99,8 +99,8 @@ export async function build() {
     const filename = path.basename(output.path);
     const relativePath = path.relative(staticOutputDir, output.path);
 
-    // Map the original entry name to the built filename
-    if (filename.startsWith("entry.client")) {
+    // Map the original entry name to the built filename (only include .js files, not .js.map)
+    if (filename.startsWith("entry.client") && filename.endsWith(".js") && !filename.endsWith(".js.map")) {
       manifest["entry.client.tsx"] = `./${relativePath}`;
     }
   }
