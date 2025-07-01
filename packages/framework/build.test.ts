@@ -71,10 +71,10 @@ test(
     const manifestPath = path.join(outBase, "static/manifest.json");
     expect(await fileExists(path.join(outBase, "config.json"))).toBe(true);
     expect(await fileExists(manifestPath)).toBe(true);
-    expect(await fileExists(path.join(outBase, "static/tailwind.css"))).toBe(
-      true,
-    );
     const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+    const cssFile = manifest["tailwind.css"]?.replace(/^\.\/?/, "");
+    expect(cssFile).toBeDefined();
+    expect(await fileExists(path.join(outBase, "static", cssFile))).toBe(true);
     const clientFile = manifest["entry.client.tsx"]?.replace(/^\.\/?/, "");
     expect(clientFile).toBeDefined();
     expect(await fileExists(path.join(outBase, "static", clientFile))).toBe(

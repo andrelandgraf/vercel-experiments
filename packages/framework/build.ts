@@ -108,11 +108,7 @@ export async function build() {
     }
   }
 
-  // Write the manifest file to both static directory (for client access) and functions directory (for server access)
-  const manifestContent = JSON.stringify(manifest, null, 2);
-  const staticManifestPath = path.join(staticOutputDir, "manifest.json");
-  await writeFile(staticManifestPath, manifestContent);
-  console.log(`✅ Created client manifest at ${staticManifestPath}`);
+  // We'll write the manifest after generating CSS so it includes the stylesheet
 
   // Compile Tailwind CSS only if a project-specific stylesheet exists
   const projectTailwindPath = path.resolve(rootDir, "tailwind.css");
@@ -125,6 +121,18 @@ export async function build() {
       const css = await readFile(projectTailwindPath, "utf8");
       const result = await compile(css, {
         from: projectTailwindPath,
+        loadModule: async (id: string, base: string) => {
+          const resolved =
+            id.startsWith(".") || id.startsWith("/")
+              ? new URL(id, `file://${base}/`).href
+              : import.meta.resolve(id);
+          const filePath = fileURLToPath(resolved);
+          return {
+            path: filePath,
+            base: path.dirname(filePath),
+            module: (await import(filePath)).default,
+          };
+        },
         loadStylesheet: async (id: string, base: string) => {
           let resolved: string;
           if (id === "tailwindcss") {
@@ -143,8 +151,12 @@ export async function build() {
         },
       });
 
-      const cssOutputPath = path.join(staticOutputDir, "tailwind.css");
-      await Bun.write(cssOutputPath, result.build([]));
+      const cssContent = result.build([]);
+      const hash = Bun.hash(cssContent).toString(36).slice(0, 8);
+      const cssFilename = `tailwind-${hash}.css`;
+      const cssOutputPath = path.join(staticOutputDir, cssFilename);
+      await Bun.write(cssOutputPath, cssContent);
+      manifest["tailwind.css"] = `./${cssFilename}`;
       console.log(`✅ Compiled Tailwind CSS to ${cssOutputPath}`);
     } catch (error) {
       console.warn(`⚠️  Failed to compile Tailwind CSS: ${error}`);
@@ -152,6 +164,12 @@ export async function build() {
   } else {
     console.log("ℹ️  No tailwind.css found - skipping Tailwind compilation");
   }
+
+  // Write the manifest file (now including the CSS) to both static and functions directories
+  const manifestContent = JSON.stringify(manifest, null, 2);
+  const staticManifestPath = path.join(staticOutputDir, "manifest.json");
+  await writeFile(staticManifestPath, manifestContent);
+  console.log(`✅ Created client manifest at ${staticManifestPath}`);
 
   // Build server entry (required)
   const funcDir = path.join(outputDir, "functions", "index.func");
