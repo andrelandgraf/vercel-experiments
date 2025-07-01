@@ -1,0 +1,7 @@
+@config "../ui/styles/globals.css";
+
+@source "./src/**/*.{js,ts,jsx,tsx}";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
