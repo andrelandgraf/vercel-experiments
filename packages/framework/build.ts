@@ -1,6 +1,11 @@
 import { $ } from "bun";
-import { mkdir, access } from "node:fs/promises";
+import { mkdir, access, readFile } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { compile } from "tailwindcss/dist/lib.mjs";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const uiStylesPath = path.resolve(__dirname, "../ui/styles/globals.css");
 
 export async function build() {
   const rootDir = process.cwd();
@@ -89,6 +94,47 @@ export async function build() {
   } else {
     console.log("✅ Build successful!");
     console.log(`📦 Output generated in: ${staticOutputDir}`);
+  }
+
+  // Compile Tailwind CSS from the shared UI styles
+  try {
+    const css = await readFile(uiStylesPath, "utf8");
+    const result = await compile(css, {
+      from: uiStylesPath,
+      loadStylesheet: async (id: string, base: string) => {
+        let resolved: string;
+        if (id === "tailwindcss") {
+          resolved = import.meta.resolve("tailwindcss/index.css");
+        } else if (id === "tw-animate-css") {
+          resolved = import.meta.resolve("tw-animate-css");
+        } else {
+          resolved = new URL(id, `file://${base}/`).href;
+        }
+        const filePath = fileURLToPath(resolved);
+        return {
+          path: filePath,
+          base: path.dirname(filePath),
+          content: await readFile(filePath, "utf8"),
+        };
+      },
+    });
+
+    const cssOutputPath = path.join(staticOutputDir, "tailwind.css");
+    await Bun.write(cssOutputPath, result.build([]));
+    console.log(`✅ Compiled Tailwind CSS to ${cssOutputPath}`);
+
+    const htmlPath = path.join(staticOutputDir, entryPoint);
+    let html = await Bun.file(htmlPath).text();
+    if (!html.includes("tailwind.css")) {
+      html = html.replace(
+        /<\/head>/i,
+        `  <link rel="stylesheet" href="./tailwind.css" />\n</head>`,
+      );
+      await Bun.write(htmlPath, html);
+      console.log(`✅ Injected Tailwind into ${htmlPath}`);
+    }
+  } catch (error) {
+    console.warn(`⚠️  Failed to compile Tailwind CSS: ${error}`);
   }
 
   return output;

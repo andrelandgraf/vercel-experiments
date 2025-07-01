@@ -65,11 +65,13 @@ That's it! No configuration needed.
 ## Build Process Details
 
 ### 1. File Validation
+
 - ✅ Ensures `src/` directory exists
-- ✅ Ensures `src/index.html` exists  
+- ✅ Ensures `src/index.html` exists
 - ⚠️ Warns if `public/` directory is missing (optional)
 
 ### 2. Build Configuration
+
 - **Entry Point**: `src/index.html`
 - **Target**: Browser
 - **Minification**: Enabled
@@ -77,6 +79,7 @@ That's it! No configuration needed.
 - **Environment**: Production
 
 ### 3. Output Structure
+
 ```
 .vercel/output/
 ├── config.json           # Vercel configuration
@@ -92,18 +95,21 @@ That's it! No configuration needed.
 The framework provides clear error messages when requirements aren't met:
 
 ### Missing Source Directory
+
 ```
 ❌ Source directory not found: /path/to/src
 Make sure you have a 'src' folder in your project root.
 ```
 
 ### Missing Entry Point
+
 ```
 ❌ Entry point not found: /path/to/src/index.html
 Make sure you have an 'index.html' file in your src folder.
 ```
 
 ### Missing Public Directory (Warning)
+
 ```
 ⚠️ Public directory not found: /path/to/public
 Skipping static file copy. Create a 'public' folder if you have static assets.
@@ -136,6 +142,7 @@ my-react-app/
 ```
 
 **scripts/build.ts:**
+
 ```typescript
 import { build } from "../framework/build";
 await build();
@@ -149,6 +156,13 @@ Run with: `bun scripts/build.ts`
 - **Node.js** - For file system operations
 - **src/index.html** - Required entry point file
 
+## Tailwind CSS
+
+Tailwind v4 is bundled automatically. The framework compiles the stylesheet at
+`packages/ui/styles/globals.css` and outputs `tailwind.css` alongside your
+built application. No Tailwind configuration file is necessary. The generated
+`index.html` is patched to include this stylesheet.
+
 ## Runtime Router
 
 The runtime includes a minimal React router for client-side navigation.
@@ -159,4 +173,3 @@ The runtime includes a minimal React router for client-side navigation.
 - Vercel-style dynamic routes using `[param]` segments
 - Query string parsing via `useRouterState`
 - `<Link>` component and `useNavigate` for navigation
-
