@@ -13,14 +13,20 @@ try {
   console.warn(
     "Warning: Could not read manifest.json, falling back to development mode",
   );
-  manifest = { "entry.client.tsx": "./entry.client.tsx" };
+  manifest = {
+    "entry.client.tsx": "./entry.client.tsx",
+    "tailwind.css": "./tailwind.css",
+  };
 }
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const clientScriptSrc = manifest["entry.client.tsx"] || "./entry.client.tsx";
+  const cssHref = manifest["tailwind.css"] || "./tailwind.css";
   const html =
     "<!doctype html>" +
-    renderToString(<Root url={url} clientScriptSrc={clientScriptSrc} />);
+    renderToString(
+      <Root url={url} clientScriptSrc={clientScriptSrc} cssHref={cssHref} />,
+    );
   return new Response(html, { headers: { "Content-Type": "text/html" } });
 }
