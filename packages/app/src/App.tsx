@@ -1,5 +1,6 @@
 import React from "react";
 import { Router, Link, useRouterState } from "framework/runtime";
+import type { Route } from "framework/runtime";
 
 function Nav() {
   return (
@@ -41,7 +42,7 @@ function User() {
   );
 }
 
-const routes = [
+export const routes: Route[] = [
   { path: "/", component: Home },
   { path: "/about", component: About },
   { path: "/users/[id]", component: User },

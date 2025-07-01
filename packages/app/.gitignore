@@ -33,6 +33,5 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # Finder (MacOS) folder config
 .DS_Store
 
-# Ignore built chunks and index.html in public directory
+# Ignore built chunks in public directory
 public/chunk-*
-public/index.html

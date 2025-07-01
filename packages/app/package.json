@@ -6,7 +6,7 @@
   "main": "src/index.tsx",
   "module": "src/index.tsx",
   "scripts": {
-    "dev": "PORT=$PORT bun ./src/index.html --console",
+    "dev": "PORT=$PORT bun --hot ./src/root.tsx",
     "build": "bun run ./scripts/build.ts",
     "start": "NODE_ENV=production bun src/index.tsx"
   },

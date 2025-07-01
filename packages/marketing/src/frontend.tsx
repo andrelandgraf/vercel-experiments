@@ -1,17 +1,16 @@
 import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import { App } from "./App";
+import { hydrateRoot } from "react-dom/client";
+import Root from "./root";
 
-const elem = document.getElementById("root")!;
 const app = (
   <StrictMode>
-    <App />
+    <Root />
   </StrictMode>
 );
 
 if (import.meta.hot) {
-  const root = (import.meta.hot.data.root ??= createRoot(elem));
+  const root = (import.meta.hot.data.root ??= hydrateRoot(document, app));
   root.render(app);
 } else {
-  createRoot(elem).render(app);
+  hydrateRoot(document, app);
 }

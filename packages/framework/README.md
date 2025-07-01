@@ -11,7 +11,7 @@ This framework follows strict conventions to keep things simple and predictable:
 ```
 your-project/
 ├── src/
-│   └── index.html          # Entry point (required)
+│   └── root.tsx           # Entry point (required)
 ├── public/                 # Static assets (optional)
 │   ├── favicon.ico
 │   ├── images/
@@ -22,7 +22,7 @@ your-project/
 ### Directory Conventions
 
 - **`src/`** - Source code directory (required)
-  - Must contain `index.html` as the entry point
+  - Must contain `root.tsx` as the entry point
   - This is where your React components and application code live
 
 - **`public/`** - Static assets directory (optional)
@@ -67,12 +67,12 @@ That's it! No configuration needed.
 ### 1. File Validation
 
 - ✅ Ensures `src/` directory exists
-- ✅ Ensures `src/index.html` exists
+- ✅ Ensures `src/root.tsx` exists
 - ⚠️ Warns if `public/` directory is missing (optional)
 
 ### 2. Build Configuration
 
-- **Entry Point**: `src/index.html`
+- **Entry Point**: `src/frontend.tsx`
 - **Target**: Browser
 - **Minification**: Enabled
 - **Sourcemaps**: Linked
@@ -84,11 +84,34 @@ That's it! No configuration needed.
 .vercel/output/
 ├── config.json           # Vercel configuration
 └── static/              # Deployable assets
-    ├── index.html       # Built entry point
+    ├── index.html       # Built document
     ├── *.js            # Bundled JavaScript
     ├── *.css           # Bundled styles
     └── ...             # Static assets from public/
 ```
+
+### 4. SSR Function
+
+If an `entry.server.ts` file exists at the project root, the build step
+compiles it into a Node.js Serverless Function located in
+`.vercel/output/functions/ssr.func`. The file must export a `GET` handler which
+returns the HTML for your application.
+
+The build also writes a `config.json` that sends every request not matched by
+the filesystem (for example `/api` routes) to this function:
+
+```json
+{
+  "version": 3,
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "ssr" }
+  ]
+}
+```
+
+Use this to server-render the initial page before the client-side router takes
+over.
 
 ## Error Handling
 
@@ -104,8 +127,8 @@ Make sure you have a 'src' folder in your project root.
 ### Missing Entry Point
 
 ```
-❌ Entry point not found: /path/to/src/index.html
-Make sure you have an 'index.html' file in your src folder.
+❌ Entry point not found: /path/to/src/root.tsx
+Make sure you have a 'root.tsx' file in your src folder.
 ```
 
 ### Missing Public Directory (Warning)
@@ -130,7 +153,7 @@ This framework is intentionally opinionated to:
 ```
 my-react-app/
 ├── src/
-│   ├── index.html
+│   ├── root.tsx
 │   ├── App.tsx
 │   └── components/
 ├── public/
@@ -154,14 +177,14 @@ Run with: `bun scripts/build.ts`
 
 - **Bun** - Used for building and bundling
 - **Node.js** - For file system operations
-- **src/index.html** - Required entry point file
+- **src/root.tsx** - Required entry point file
 
 ## Tailwind CSS
 
 Tailwind v4 is bundled automatically. The framework compiles the stylesheet at
 `packages/ui/styles/globals.css` and outputs `tailwind.css` alongside your
 built application. No Tailwind configuration file is necessary. The generated
-`index.html` is patched to include this stylesheet.
+HTML document is patched to include this stylesheet.
 
 ## Runtime Router
 
