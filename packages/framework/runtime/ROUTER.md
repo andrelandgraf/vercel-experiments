@@ -65,3 +65,20 @@ export default function App() {
 
 `Router` listens for `popstate` events so browser navigation works as expected.
 When no route matches the current path, nothing is rendered.
+
+## Server-Side Rendering
+
+When rendering on the server you can provide a `url` prop to `Router`. This value is used instead of `window.location` so the correct route is rendered for the incoming request.
+
+```tsx
+import { Router } from 'framework/runtime';
+
+const routes = [
+  { path: '/', component: Home },
+  { path: '/about', component: About },
+];
+
+export default function render(req: Request) {
+  return <Router routes={routes} url={req.url} />;
+}
+```

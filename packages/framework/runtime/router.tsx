@@ -69,34 +69,56 @@ function createState(url: URL, routes: Route[]): RouterState {
 
 export type RouterProps = {
   routes: Route[];
+  /**
+   * Optional URL for server-side rendering. When provided the router will use
+   * this value instead of `window.location`.
+   */
+  url?: string | URL;
   children?: React.ReactNode;
 };
 
-export function Router({ routes, children }: RouterProps) {
-  const [state, setState] = useState(() =>
-    createState(new URL(window.location.href), routes),
+export function Router({ routes, url, children }: RouterProps) {
+  const isBrowser = typeof window !== "undefined";
+  const resolveUrl = useCallback(
+    (u?: string | URL) => {
+      if (u instanceof URL) return u;
+      if (typeof u === "string") {
+        return new URL(u, isBrowser ? window.location.origin : "http://localhost");
+      }
+      if (isBrowser) return new URL(window.location.href);
+      return new URL("http://localhost/");
+    },
+    [isBrowser],
   );
+
+  const [state, setState] = useState(() => createState(resolveUrl(url), routes));
 
   const navigate = useCallback(
     (to: string, options?: { replace?: boolean }) => {
-      const url = new URL(to, window.location.origin);
-      if (options?.replace) {
-        window.history.replaceState(null, "", url.toString());
-      } else {
-        window.history.pushState(null, "", url.toString());
+      const nextUrl = new URL(
+        to,
+        isBrowser ? window.location.origin : state.url,
+      );
+      if (isBrowser) {
+        if (options?.replace) {
+          window.history.replaceState(null, "", nextUrl.toString());
+        } else {
+          window.history.pushState(null, "", nextUrl.toString());
+        }
       }
-      setState(createState(url, routes));
+      setState(createState(nextUrl, routes));
     },
-    [routes],
+    [routes, isBrowser, state.url],
   );
 
   useEffect(() => {
+    if (!isBrowser) return;
     const handler = () => {
       setState(createState(new URL(window.location.href), routes));
     };
     window.addEventListener("popstate", handler);
     return () => window.removeEventListener("popstate", handler);
-  }, [routes]);
+  }, [routes, isBrowser]);
 
   const value = useMemo<RouterContextValue>(
     () => ({ ...state, navigate }),
