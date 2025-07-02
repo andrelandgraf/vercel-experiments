@@ -1,13 +1,13 @@
 import { renderToString } from "react-dom/server";
 import { readFile, readdir } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
+import path from "node:path";
 import { Router } from "framework/runtime";
 import { routes } from "./App";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const templatePath = fileURLToPath(new URL("./index.html", import.meta.url));
-  const dir = fileURLToPath(new URL("./", import.meta.url));
+  const templatePath = path.join(__dirname, "index.html");
+  const dir = __dirname;
   console.log("📂 Server cwd", process.cwd());
   console.log("📂 Server dir", dir);
   console.log("📂 Dir contents", await readdir(dir));
