@@ -77,8 +77,14 @@ test(
     expect(cssMatch).toBeTruthy();
     expect(jsMatch).toBeTruthy();
     if (cssMatch && jsMatch) {
-      const cssFile = cssMatch[1].replace(/^\.\/?/, "");
-      const jsFile = jsMatch[1].replace(/^\.\/?/, "");
+      const cssFile = cssMatch[1]
+        .replace(/^\.\/?/, "")
+        .replace(/^\/static\//, "")
+        .replace(/^\//, "");
+      const jsFile = jsMatch[1]
+        .replace(/^\.\/?/, "")
+        .replace(/^\/static\//, "")
+        .replace(/^\//, "");
       expect(await fileExists(path.join(staticDir, cssFile))).toBe(true);
       expect(await fileExists(path.join(staticDir, jsFile))).toBe(true);
     }

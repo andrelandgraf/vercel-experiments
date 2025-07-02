@@ -1,9 +1,11 @@
 import { $ } from "bun";
 import { mkdir, access, writeFile, rm } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import path from "node:path";
 
 export async function build() {
   const rootDir = process.cwd();
+  console.log(`🛠️  Starting build in ${rootDir}`);
   const publicDir = "public";
   const srcDir = "src";
   const htmlEntry = "index.html";
@@ -55,6 +57,8 @@ export async function build() {
   // Create output directories
   await mkdir(staticOutputDir, { recursive: true });
   console.log(`✅ Created output directory: ${staticOutputDir}`);
+  console.log("📂 Initial contents of output directory:");
+  await $`ls -al ${staticOutputDir}`;
 
   // Copy static files from public/ to output directory (if public dir exists)
   if (hasPublicDir) {
@@ -63,6 +67,8 @@ export async function build() {
       console.log(
         `✅ Copied static files from ${publicDir}/ to ${staticOutputDir}`,
       );
+      console.log("📂 Contents after copying public files:");
+      await $`ls -al ${staticOutputDir}`;
     } catch (error) {
       console.warn(`⚠️  Failed to copy files from ${publicDir}/: ${error}`);
     }
@@ -96,6 +102,8 @@ export async function build() {
   if (!htmlOutput.success) {
     throw new Error("Client build failed");
   }
+  console.log("✅ Client build completed");
+  await $`ls -al ${staticOutputDir}`;
 
   if (cleanupTailwind) {
     await rm(tailwindPath);
@@ -130,11 +138,24 @@ export async function build() {
   );
   console.log(`✅ Built SSR function to ${funcDir}`);
 
-  // Move the built HTML template next to the server function
+  console.log(`📂 Contents of static output directory before copy:`);
+  await $`ls -al ${staticOutputDir}`;
+
+  // Copy the built HTML template next to the server function
   try {
-    await $`mv ${path.join(staticOutputDir, "index.html")} ${path.join(funcDir, "index.html")}`;
+    await $`cp ${path.join(staticOutputDir, "index.html")} ${path.join(funcDir, "index.html")}`;
+    console.log("✅ Copied index.html to function directory");
   } catch (error) {
-    console.warn(`⚠️  Failed to move index.html: ${error}`);
+    console.warn(`⚠️  Failed to copy index.html: ${error}`);
+  }
+
+  console.log(`📂 Contents of ${funcDir} after move:`);
+  await $`ls -al ${funcDir}`;
+
+  if (existsSync(path.join(funcDir, "index.html"))) {
+    console.log("✅ Verified index.html present in function directory");
+  } else {
+    console.warn("❌ index.html not found in function directory");
   }
 
   // Create config.json for Vercel Build Output Configuration
