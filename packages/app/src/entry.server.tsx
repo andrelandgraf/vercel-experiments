@@ -6,8 +6,9 @@ import { routes } from "./App";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const templatePath = path.join(__dirname, "index.html");
-  const dir = __dirname;
+  const dir = process.cwd();
+  const templatePath = path.join(dir, "index.html");
+
   console.log("📂 Server cwd", process.cwd());
   console.log("📂 Server dir", dir);
   console.log("📂 Dir contents", await readdir(dir));
