@@ -69,9 +69,11 @@ test(
 
     const outBase = path.join(dir, ".vercel/output");
     const staticDir = path.join(outBase, "static");
+    const funcDir = path.join(outBase, "functions", "index.func");
     expect(await fileExists(path.join(outBase, "config.json"))).toBe(true);
-    expect(await fileExists(path.join(staticDir, "index.html"))).toBe(true);
-    const html = await readFile(path.join(staticDir, "index.html"), "utf8");
+    expect(await fileExists(path.join(staticDir, "index.html"))).toBe(false);
+    expect(await fileExists(path.join(funcDir, "index.html"))).toBe(true);
+    const html = await readFile(path.join(funcDir, "index.html"), "utf8");
     const cssMatch = html.match(/href="(.+\.css)"/);
     const jsMatch = html.match(/src="(.+\.js)"/);
     expect(cssMatch).toBeTruthy();
