@@ -42,7 +42,7 @@ function withTempDir(fn: (dir: string) => Promise<void>) {
 }
 
 const htmlContent = `<!doctype html>
-<html><head></head><body><script type="module" src="./index.ts"></script></body></html>`;
+<html><head><link rel="stylesheet" href="../tailwind.css" /></head><body><script type="module" src="./entry.client.tsx"></script></body></html>`;
 const tsContent = `console.log('hello');`;
 
 test(
@@ -68,19 +68,21 @@ test(
     expect(result.success).toBe(true);
 
     const outBase = path.join(dir, ".vercel/output");
-    const manifestPath = path.join(outBase, "static/manifest.json");
+    const staticDir = path.join(outBase, "static");
     expect(await fileExists(path.join(outBase, "config.json"))).toBe(true);
-    expect(await fileExists(manifestPath)).toBe(true);
-    const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
-    const cssFile = manifest["tailwind.css"]?.replace(/^\.\/?/, "");
-    expect(cssFile).toBeDefined();
-    expect(await fileExists(path.join(outBase, "static", cssFile))).toBe(true);
-    const clientFile = manifest["entry.client.tsx"]?.replace(/^\.\/?/, "");
-    expect(clientFile).toBeDefined();
-    expect(await fileExists(path.join(outBase, "static", clientFile))).toBe(
-      true,
-    );
-    expect(await fileExists(path.join(outBase, "static/test.txt"))).toBe(true);
+    expect(await fileExists(path.join(staticDir, "index.html"))).toBe(true);
+    const html = await readFile(path.join(staticDir, "index.html"), "utf8");
+    const cssMatch = html.match(/href="(.+\.css)"/);
+    const jsMatch = html.match(/src="(.+\.js)"/);
+    expect(cssMatch).toBeTruthy();
+    expect(jsMatch).toBeTruthy();
+    if (cssMatch && jsMatch) {
+      const cssFile = cssMatch[1].replace(/^\.\/?/, "");
+      const jsFile = jsMatch[1].replace(/^\.\/?/, "");
+      expect(await fileExists(path.join(staticDir, cssFile))).toBe(true);
+      expect(await fileExists(path.join(staticDir, jsFile))).toBe(true);
+    }
+    expect(await fileExists(path.join(staticDir, "test.txt"))).toBe(true);
   }),
 );
 
@@ -121,6 +123,6 @@ test(
   withTempDir(async (dir) => {
     await mkdir(path.join(dir, "src"));
     const { build } = await loadBuild();
-    await expect(build()).rejects.toThrow("Client entry not found");
+    await expect(build()).rejects.toThrow("HTML entry not found");
   }),
 );
