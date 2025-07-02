@@ -138,18 +138,18 @@ export async function build() {
   );
   console.log(`✅ Built SSR function to ${funcDir}`);
 
-  console.log(`📂 Contents of static output directory before move:`);
+  console.log(`📂 Contents of static output directory before copy:`);
   await $`ls -al ${staticOutputDir}`;
 
-  // Move the built HTML template next to the server function
+  // Copy the built HTML template next to the server function
   try {
-    await $`mv ${path.join(staticOutputDir, "index.html")} ${path.join(funcDir, "index.html")}`;
-    console.log("✅ Moved index.html to function directory");
+    await $`cp ${path.join(staticOutputDir, "index.html")} ${path.join(funcDir, "index.html")}`;
+    console.log("✅ Copied index.html to function directory");
   } catch (error) {
-    console.warn(`⚠️  Failed to move index.html: ${error}`);
+    console.warn(`⚠️  Failed to copy index.html: ${error}`);
   }
 
-  console.log(`📂 Contents of ${funcDir} after move:`);
+  console.log(`📂 Contents of ${funcDir} after copy:`);
   await $`ls -al ${funcDir}`;
 
   if (existsSync(path.join(funcDir, "index.html"))) {
