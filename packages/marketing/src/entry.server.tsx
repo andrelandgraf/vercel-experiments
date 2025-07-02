@@ -1,31 +1,12 @@
 import { renderToString } from "react-dom/server";
-import { readFileSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import Root from "./root";
-
-// Read the manifest file to get the hashed client script filename
-let manifest: Record<string, string> = {};
-try {
-  const manifestPath = resolve(process.cwd(), "manifest.json");
-  const manifestContent = readFileSync(manifestPath, "utf8");
-  manifest = JSON.parse(manifestContent);
-} catch (error) {
-  console.warn(
-    "Warning: Could not read manifest.json, falling back to development mode",
-  );
-  manifest = {
-    "entry.client.tsx": "./entry.client.tsx",
-    "tailwind.css": "./tailwind.css",
-  };
-}
+import App from "./App";
 
 export async function GET() {
-  const clientScriptSrc = manifest["entry.client.tsx"] || "./entry.client.tsx";
-  const cssHref = manifest["tailwind.css"] || "./tailwind.css";
-  const html =
-    "<!doctype html>" +
-    renderToString(
-      <Root clientScriptSrc={clientScriptSrc} cssHref={cssHref} />,
-    );
+  const templatePath = resolve(import.meta.dir, "../static/index.html");
+  let html = await readFile(templatePath, "utf8");
+  const appHtml = renderToString(<App />);
+  html = html.replace('<div id="app"></div>', `<div id="app">${appHtml}</div>`);
   return new Response(html, { headers: { "Content-Type": "text/html" } });
 }
