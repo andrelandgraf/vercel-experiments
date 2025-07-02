@@ -87,6 +87,7 @@ export async function build() {
     sourcemap: "linked",
     target: "browser",
     minify: true,
+    publicPath: "/static/",
     define: {
       "process.env.NODE_ENV": '"production"',
     },
@@ -128,6 +129,13 @@ export async function build() {
     JSON.stringify(serverConfig, null, 2),
   );
   console.log(`✅ Built SSR function to ${funcDir}`);
+
+  // Move the built HTML template next to the server function
+  try {
+    await $`mv ${path.join(staticOutputDir, "index.html")} ${path.join(funcDir, "index.html")}`;
+  } catch (error) {
+    console.warn(`⚠️  Failed to move index.html: ${error}`);
+  }
 
   // Create config.json for Vercel Build Output Configuration
   const configPath = path.join(outputDir, "config.json");
