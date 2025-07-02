@@ -6,7 +6,7 @@ import { routes } from "./App";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const templatePath = resolve(import.meta.dir, "../static/index.html");
+  const templatePath = resolve(__dirname, "../static/index.html");
   let html = await readFile(templatePath, "utf8");
   const appHtml = renderToString(<Router routes={routes} url={url} />);
   html = html.replace('<div id="app"></div>', `<div id="app">${appHtml}</div>`);

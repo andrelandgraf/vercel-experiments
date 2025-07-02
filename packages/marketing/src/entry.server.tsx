@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import App from "./App";
 
 export async function GET() {
-  const templatePath = resolve(import.meta.dir, "../static/index.html");
+  const templatePath = resolve(__dirname, "../static/index.html");
   let html = await readFile(templatePath, "utf8");
   const appHtml = renderToString(<App />);
   html = html.replace('<div id="app"></div>', `<div id="app">${appHtml}</div>`);
