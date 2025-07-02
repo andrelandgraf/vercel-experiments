@@ -122,11 +122,20 @@ export async function build() {
       const result = await compile(css, {
         from: projectTailwindPath,
         loadModule: async (id: string, base: string) => {
+          const root = process.cwd();
+          const baseDir = path.isAbsolute(base) ? base : root;
           const resolved =
             id.startsWith(".") || id.startsWith("/")
-              ? new URL(id, `file://${base}/`).href
+              ? new URL(id, `file://${baseDir}/`).href
               : import.meta.resolve(id);
           const filePath = fileURLToPath(resolved);
+          if (filePath.endsWith(".css")) {
+            return {
+              path: filePath,
+              base: path.dirname(filePath),
+              module: {},
+            };
+          }
           return {
             path: filePath,
             base: path.dirname(filePath),
@@ -134,13 +143,15 @@ export async function build() {
           };
         },
         loadStylesheet: async (id: string, base: string) => {
+          const root = process.cwd();
           let resolved: string;
           if (id === "tailwindcss") {
             resolved = import.meta.resolve("tailwindcss/index.css");
           } else if (id === "tw-animate-css") {
             resolved = import.meta.resolve("tw-animate-css");
           } else {
-            resolved = new URL(id, `file://${base}/`).href;
+            const baseDir = path.isAbsolute(base) ? base : root;
+            resolved = new URL(id, `file://${baseDir}/`).href;
           }
           const filePath = fileURLToPath(resolved);
           return {
